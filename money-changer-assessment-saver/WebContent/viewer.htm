@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<!-- Compiled and minified CSS -->
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+<!-- Compiled and minified JavaScript -->
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.4.1.js"
+	integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+	crossorigin="anonymous"></script>
+<title>Exchange Rates</title>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col s12">
+				<h1>Exchange Rates</h1>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col s12">
+				<table class="centered">
+					<thead>
+						<tr>
+							<th>Currency</th>
+							<th>We Buy 1 Unit of your Currency for this SGD Amount</th>
+							<th>We Sell 1 of this currency at this SGD Amount</th>
+						</tr>
+					</thead>
+
+					<tbody>
+
+					</tbody>
+				</table>
+
+				</
+			</div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript">
+var refreshRates = function(){
+	console.log("Hi again");
+	
+	
+	$.getJSON( "http://localhost:8086/exchangerate", 
+		function( data ) {
+		  $("tbody tr").remove();
+		console.log(data);
+		  var items = [];
+		  $.each( data, function( key, val ) {
+		    items.push( "" + "<td>"+val.isoName+"</td><td>"+val.buyRate+"</td><td>"+val.sellRate+"</td>" + "" );
+		  });
+		 
+		  $( "<tr />", {
+		    "class": "my-new-list",
+		    html: items.join( "" )
+		  }).appendTo( "tbody" );
+		});
+}
+$(document).ready(
+	() =>{
+		console.log("refreshing Rates");			
+		refreshRates();
+		setInterval(refreshRates, 10000);
+	}		
+);
+</script>
+</html>

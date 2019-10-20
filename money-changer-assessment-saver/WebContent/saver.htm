@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<script src="https://code.jquery.com/jquery-3.4.1.js"
+	integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+	crossorigin="anonymous"></script>
+<!--Import Google Icon Font-->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+	rel="stylesheet">
+
+<!-- Compiled and minified CSS -->
+<link rel="stylesheet"
+	href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+<!-- Compiled and minified JavaScript -->
+<script
+	src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+<title>Submit Transaction</title>
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col s12">
+				<h1>Submit Transaction</h1>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col s12"></div>
+			<form id="transactionForm" class="col s12">
+				<div class="row">
+					<div class="input-field col s12">
+						<select name="currency">
+							<option value="" disabled selected>Choose your option</option>
+							<option value="USD">United States Dollars</option>
+						</select> <label>Currency</label>
+					</div>
+				</div>
+				<div id="buyOrSellRow" class="row hide">
+					<div class="col s12">
+						<h6>Are You Buying the Selected Currency From the Customer,
+							Or Selling the Selected Currency to the Customer?</h6>
+					</div>
+					<div class="col s12">
+						<p>
+							<label> <input name="buyOrSell" type="radio" value="buy" />
+								<span>Buying</span>
+							</label>
+						</p>
+						<p>
+							<label> <input name="buyOrSell" type="radio" value="sell" />
+								<span>selling</span>
+							</label>
+						</p>
+					</div>
+				</div>
+				<div id="dispenseRow" class="row hide">
+					<div class="sellCol hide col s12 ">
+						For Every <i class="currencyChosen">asd</i> you give, you get <i
+							class="dispenseCurrency">asd</i><i id="sell_rate">123</i>
+					</div>
+					<div class="buyCol hide col s12 ">
+						For Every <i class="dispenseCurrency">asd</i> that you have, you
+						get <i class="currencyChosen">asd</i> <i id="buy_rate">123</i>
+
+
+					</div>
+					<div class="col s12">
+						<h6>How Much are you getting from the Customer then?</h6>
+
+					</div>
+					<div class="input-field col s12">
+						<input name="amount" placeholder="Amount" id="amount"
+							type="number" step="any" min="0" class="validate"> <label
+							for="amount">Amount</label>
+					</div>
+				</div>
+				<div class="resultRow row hide">
+					<div class="col s12">
+						Ok. This means that you will give the customer <b
+							class="dispenseCurrencyLah">asd</b> <b id="dispenseAmount">123</b>
+					</div>
+
+				</div>
+
+				<div class=" submitRow row hide">
+					<div class="col s12">
+						<button class="btn waves-effect waves-light" type="submit"
+							name="action">
+							Submit <i class="material-icons right">send</i>
+						</button>
+					</div>
+				</div>
+				<div class="alertRow row hide">
+					<div class="col s12">
+						<div class="card-panel">
+							<span class="blue-text text-darken-2">Transaction Submitted Successfully!</span>
+						</div>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+	<script>
+    $(document)
+        .ready(
+            function() {
+              $('select').formSelect();
+              $("select[name=currency]").change(
+                  function() {
+                    $("#buyOrSellRow").removeClass("hide");
+                    $(".dispenseCurrency").text("Singapore Dollar");
+                    $(".currencyChosen").text(
+                        $("select[name=currency] option:selected").text());
+                    // get the rates from the microservice
+                    $.getJSON("http://localhost:8086/exchangerate/"
+                        + $(this).val(), function(data) {
+                      console.log(data);
+                      $("#sell_rate").text(data.sellRate);
+                      $("#buy_rate").text(data.buyRate);
+                    });
+                  });
+              $("input[name='buyOrSell']").on(
+                  "change",
+                  function() {
+                    console.log(this.value);
+                    $("#dispenseRow").removeClass("hide");
+
+                    if (this.value == "buy") {
+                      $(".buyCol").removeClass("hide");
+                      $(".sellCol").addClass("hide");
+                      $(".dispenseCurrencyLah").text("SGD");
+                    }
+                    if (this.value == "sell") {
+                      $(".sellCol").removeClass("hide");
+                      $(".buyCol").addClass("hide");
+                      $(".dispenseCurrencyLah").text(
+                          $("select[name=currency] option:selected").text());
+                    }
+
+                  });
+
+              $("#amount")
+                  .on(
+                      "keyup change",
+                      function() {
+                        //find out what is the currency
+                        var amount = $(this).val();
+                        //find out if buy or sell
+                        var buyFlag = $('input[name=buyOrSell]:checked').val() == "buy" ? true
+                            : false;
+                        if (buyFlag) {
+                          var rate = $("#buy_rate").text();
+                          var result = (1 / $("#buy_rate").text() * amount)
+                              .toFixed(2);
+                          $("#dispenseAmount").text(result);
+
+                        } else {
+                          var rate = $("#sell_rate").text();
+                          var result = (1 / $("#sell_rate").text() * amount)
+                              .toFixed(2);
+                          $("#dispenseAmount").text(result);
+
+                        }
+                        // finally calculate on the fly
+                        $(".resultRow, .submitRow").removeClass("hide");
+                      });
+              $("#transactionForm")
+                  .submit(
+                      function(e) {
+                        e.preventDefault();
+                        var buyFlag = $('input[name=buyOrSell]:checked').val() == "buy" ? true
+                            : false;
+                        console.log("submit event cancelled");
+                        $.post({
+                          url : "http://localhost:8086/transaction",
+                          data : JSON.stringify({
+                            "depositCurrency" : buyFlag ? $(
+                                "select[name=currency]").val() : "SGD",
+                            "depositAmount" : $("#amount").val(),
+                            "dispenseCurrency" : buyFlag ? "SGD" : $(
+                                "select[name=currency]").val(),
+                            "dispenseAmount" : $("#dispenseAmount").text()
+
+                          }),
+                          complete : function() {
+                            console.log("transaction submitted successfully.");
+							$(".alertRow").removeClass("hide");
+                          },
+                          dataType : "application/json",
+                          headers : {
+                            'Accept' : 'application/json',
+                            'Content-Type' : 'application/json'
+                          },
+                        });
+                      });
+            });
+  </script>
+</body>
+</html>
